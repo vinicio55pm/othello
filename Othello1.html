@@ -1,0 +1,970 @@
+<html>
+
+<head>
+    <title>Othello</title>
+    <style>
+        #puntuacion {
+            position: absolute;
+            background-color: green;
+            color: black;
+            font-size: 30;
+            text-align: center;
+            width: 662px;
+            border: solid;
+        }
+
+        #turno {
+            position: absolute;
+            font-size: 30;
+            text-align: center;
+            width: 400px;
+            height: 200px;
+            margin-left: 675;
+            color: green;
+            border: solid;
+        }
+
+        #jugadores {
+            align-items: center;
+            position: absolute;
+            font-size: 30;
+            text-align: center;
+            width: 400px;
+            height: 400px;
+            margin-left: 675;
+            margin-top: 210px;
+            color: green;
+            border: solid;
+        }
+
+        #fondo {
+            position: absolute;
+            left: 0;
+            top: 0;
+            background-color: black;
+            height: 500;
+            width: 500;
+            margin-top: 55px;
+            margin-left: 8px;
+        }
+
+        #piezasTablero {
+            position: absolute;
+            margin-top: 47px;
+        }
+
+        #sePuedeMover {
+            position: absolute;
+            margin-top: 46px;
+        }
+    </style>
+    <script>
+        /*
+
+                NOTA VERIFICAR METODO sePuedeMover() RETORNA FALSE CUANDO AUN HAY MOVIMIENTOS DISPONIBLES
+
+            -DETECTAR PIEZAS SUPERIOR IZQUIERDA(\)-LISTO-
+            -DETECTAR PIEZAS SUPERIOR DERECHA(/)-LISTO-
+            -DETECTAR PIEZAS INFERIOR IZQUIERDA(/)-LISTO-
+            -DETECTAR PIEZAS INFERIOR DERECHA(\)-LISTO-
+            -PONER UN MARCADOR DE PIEZAS-LISTO-
+            -CAMBIAR EL'DIV' TURNO AL COLOR DEL JUGADOR EN TURNO-LISTO-
+            -MARCAR LAS CASILLAS DONDE SE PUEDE REALIZAR UN MOVIMIENTO(CON UNA PIEZA O COLOR LLAMATIVO)-LISTO-
+            -PONER UN MENSAJE CUANDO SE GANE, PIERDE O EMPATE 
+            -BOTON PARA INICIAR LA PARTIDA Y ESCOJGER LOS JUGADORES
+            -AL PONER TIPO DE JUGADORES BLOQUEAR TODOS LOS ELEMENTOS(TABLERO, PIEZAS)
+            -IMPLEMENTAR ALGORITMO MINIMAX
+            -IMPLEMENTAR ALGORITMO GENETICO
+                -IMPLEMENTAR LAS FUNCIONES PARA QUE LAS MAQUINAS PUEDAN JUGAR
+            
+        */
+        var tipoJuego = 0;// Tipo de juego JvsJ=1, JvsM=2, MvsM=3
+        var Dificultad = 4;
+        var fondo; // OBTENEMOS EL OBJETO TABLERO QUE SE MUESTRA EN LA PANTALLA
+        var separacion = 3; // SEPARACION EN CADA CUADRO DEL TABLERO
+        var tamCuadros = 80; // EL TAMAÑO DE LOS CUADROS DEL TABLERO
+        var piezasTablero; // OBTENEMOS EL OBJETO PIEZAS DEL TABLERO QUE SE MUESTRAN EN LA PANTALLA
+        var turno = 1; // ES EL TURNO DE CADA JUGADOR( O MAQUINA) 1= NEGRAS, 2 BLANCAS
+        var turnoPantalla;// OBTENEMOS EL OBJETO TABLERO QUE SE MUESTRA EN PANTALLA
+        var tipoJugadores = 0;//1=(H vs H) 2=(H vs M) 3=(M vs M), H=(Humano) M=(Maquina), PARA IMPLEMENTAR LOS TIPOS DE JUGADORES(FALTA IMPLEMENTAR)
+        var finJuego = false;// PARA VER SI SE HA ACABADO EL JUEGO
+        var sePuedeMoverFicha;// OBTENEMOS EL OBJETO DE LAS FICHAS TRANSLUSIDAS DEL TABLERO PARA SABER LAS POSIBLES JUGADAS
+        var tablero = [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 2, 1, 0, 0, 0],
+            [0, 0, 0, 1, 2, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+        ]; // ES EL TABLERO EN EL QUE TRABAJAMOS Y NOS BASAMOS EN CADA METODO QUE TENEMOS PARA DESPUES ACTUALIZAR EL TABLERO EN PANTALLA DEACUERDO A ESTE
+        //var tableroAnterior=[];
+        var matrizPesos = [
+            [10, 10, 5, 5, 5, 5, 10, 10],
+            [10, 10, 0, 0, 0, 0, 10, 10],
+            [5, 0, 0, 0, 0, 0, 0, 5],
+            [5, 0, 0, 10, 10, 0, 0, 5],
+            [5, 0, 0, 10, 10, 0, 0, 5],
+            [5, 0, 0, 0, 0, 0, 0, 5],
+            [10, 10, 0, 0, 0, 0, 10, 10],
+            [10, 10, 5, 5, 5, 5, 10, 10]
+        ];
+
+        window.onload = function () {// FUNCION QUE SE EJECUTA AL CARGARSE LA PAGINA
+            fondo = document.getElementById("fondo");
+            piezasTablero = document.getElementById("piezasTablero");
+            sePuedeMoverFicha = document.getElementById("sePuedeMover");
+            fondo.style.width = tamCuadros * 8 + (separacion * 9)
+            fondo.style.height = tamCuadros * 8 + (separacion * 9)
+            crearTablero();
+            actualizarTablero();
+            tableroPosiblesMovimientos();
+        }
+        /*
+        function iniciar() {
+            fondo = document.getElementById("fondo");
+            piezasTablero = document.getElementById("piezasTablero");
+            fondo.style.width = tamCuadros * 8 + (separacion * 9)
+            fondo.style.height = tamCuadros * 8 + (separacion * 9)
+            crearTablero();
+            actualizarTablero();
+        }
+        */
+        function iniciarPartida() {//
+            var combo = document.getElementById("opcionesPartida");
+            //console.log("Valor: " + combo.value);
+            var selected = combo.options[combo.selectedIndex].text;
+            //alert(selected);
+            tipoJuego = combo.value;
+
+            switch (selected) {
+                case "Jugador vs Jugador":
+                    //alert("JvsJ");
+                    tipoJuego = 1;
+                    iniciarJugada();
+                    break;
+                case "Jugador vs Maquina":
+                    //alert("JvsM");
+                    tipoJuego = 2;
+                    iniciarJugada();
+                    break;
+                case "Maquina vs Maquina":
+                    //alert("MvsM");
+                    tipoJuego = 3;
+                    iniciarJugada();
+                    break;
+            }
+
+        }
+        function iniciarJugada() {
+            var combo = document.getElementById("maquinaUno");
+            //console.log("Maquina 1: " + combo.value);
+            var selected = combo.options[combo.selectedIndex].text;
+            var combo2 = document.getElementById("maquinaUno");
+            //console.log("Maquina 2: " + combo2.value);
+            var selected2 = combo2.options[combo2.selectedIndex].text;
+            //console.log("Tipo juego: " + tipoJuego);
+            switch (tipoJuego) {
+                case 1:
+                    //alert("1");
+                    break;
+                case 2:
+                    //alert("2");
+                    break;
+                case 3:
+                    /*var contador = 0;
+                    while (contador < 2) {
+                        contador++;
+                        //casillaOprimida();*/
+                    //console.log("____Contador: " + contador + "____");
+                    var posicionesXY = minMax(tablero, turno);
+                    casillaOprimida(posicionesXY[1], posicionesXY[0]);
+                    //}
+                    /*var posicionesXY = minMax(tablero, turno);
+                    casillaOprimida(posicionesXY[1], posicionesXY[0]);*/
+                    //alert("3");
+
+                    break;
+            }
+        }
+        function opcion() {//
+            var op = document.getElementById("opciones").selectedIndex;
+            op++;
+            //console.log(op.selectedIndex);
+            //alert(op);
+        }
+        function finJuego() {//VERIFICA SI EL TABLERO ESTA LLENO PARA MARCAR EL FIN DEL JUEGO Y CONTABILIZAR PUNTOS
+            turnoPantalla = document.getElementById("turno");
+            var puntosNegro = 0;
+            var puntosBlanco = 0;
+            for (columnas = 0; columnas < 8; columnas++) {
+                for (filas = 0; filas < 8; filas++) {
+                    var elemento = tablero[columnas][filas];
+                    if (elemento == 1) {
+                        puntosNegro++;
+                    } else if (elemento == 2) {
+                        puntosBlanco++;
+                    }
+                }
+            }
+            var ganador = "";
+            if (puntosNegro > puntosBlanco) {
+                ganador = "Negras Ganan";
+            } else if (puntosNegro < puntosBlanco) {
+                ganador = "Blancas Ganan";
+            } else if (puntosBlanco == puntosNegro) {
+                ganador = "Empate";
+            }
+            turnoPantalla.innerHTML = "Turno:<BR>NEGRAS<BR><BR>Resultado:<BR>" + ganador;
+        }
+        function crearTablero() {// CREA EL TABLERO DEACUERDO A LA MATRIZ DE MAS ARRIBA
+            turnoJugadorPantalla("");
+            turno.innerHTML = "TURNO<br><br><br>NEGRAS";
+            for (columna = 0; columna < 8; columna++) {
+                for (fila = 0; fila < 8; fila++) {
+                    var cuadro = document.createElement("div");
+                    cuadro.style.position = "absolute";
+                    cuadro.style.width = tamCuadros;
+                    cuadro.style.height = tamCuadros;
+                    cuadro.style.backgroundColor = "green";
+                    cuadro.style.left = (tamCuadros + separacion) * columna + separacion;
+                    cuadro.style.top = (tamCuadros + separacion) * fila + separacion;
+                    cuadro.setAttribute("onclick", "casillaOprimida(" + fila + "," + columna + ")");
+                    fondo.appendChild(cuadro);
+
+                }
+            }
+        }
+        function tableroPosiblesMovimientos() {
+            // VERIFICA EN EL TABLERO LOS POSIBLES MOVIMIENTOS QUE SE PUEDEN HACER EN EL TURNO Y LOS MARCA EN EL TABLERO CON UNA PIEZA TRANSLUCIDA
+            /*
+                
+            */
+            sePuedeMoverFicha.innerHTML = "";
+            for (columna = 0; columna < 8; columna++) {
+                for (fila = 0; fila < 8; fila++) {
+                    var elemento = tablero[fila][columna];
+                    if (elemento == 0 && posibleLugarFicha(turno, fila, columna)) {
+                        var posibleJugada = document.createElement("div");
+                        posibleJugada.style.position = "absolute";
+                        posibleJugada.style.width = tamCuadros;
+                        posibleJugada.style.height = tamCuadros;
+                        /*if (turno == 1 || turno==2) {
+                            //pieza.style.backgroundColor= "black";
+                            //posibleJugada.style.backgroundImage = "radial-gradient(#333333 30%, black 70%)";
+                            //posibleJugada.style.border="2px solid red";
+                           // posibleJugada.style.background="radial-gradient(red 5%, yellow 25%, #1E90FF 50%)";
+                           posibleJugada.style.background="rgba(0, 128, 210, 0.6)";
+                           posibleJugada.style.op
+                        }*/
+
+                        if (turno == 1) {
+                            //pieza.style.backgroundColor= "black";
+                            posibleJugada.style.backgroundImage = "radial-gradient(#333333 30%, black 70%)";
+                        } else if (turno == 2) {
+                            //pieza.style.backgroundColor= "white";
+                            posibleJugada.style.backgroundImage = "radial-gradient(white 30%, #cccccc 70%)";
+                        }
+                        posibleJugada.style.borderRadius = "100%";
+                        posibleJugada.style.opacity = "0.3";
+                        posibleJugada.style.left = (tamCuadros + separacion) * columna + separacion;
+                        posibleJugada.style.top = (tamCuadros + separacion) * fila + separacion;
+                        posibleJugada.style.zIndex = 2;
+                        posibleJugada.setAttribute("onclick", "casillaOprimida(" + fila + "," + columna + ")");
+                        sePuedeMoverFicha.appendChild(posibleJugada);
+                    } else {
+
+                    }
+
+                }
+            }
+            actualizarMarcador();
+            //console.log(tablero);
+            //console.log("Tablero actualizado");
+
+        }
+        function casillaOprimida(fila, columna) {//EL EVENTO QUE SE ACTIVA AL DAR CLIC EN UNA CASILLA DEL TABLERO
+            if (tipoJuego == 1 || tipoJuego == 2 || tipoJuego == 3) {
+                /*if (turno == 1) {
+                    console.log("__________Negras__________");
+                    console.log(fila + ", " + columna);
+                } else {
+                    console.log("__________ Blancas__________");
+                    console.log(fila + ", " + columna);
+                }*/
+                if (finJuego == false) {//MIENTRAS EL JUEGO NO SE ACABE
+
+                    var elemento = tablero[fila][columna];
+                    //console.log(elemento+" "+fila+" "+columna);
+                    if (elemento != 0) {//MIENTRAS LA CASILLA OPRIMIDA NO ESTE OCUPADA
+                        //console.log("casillaOprimida1");
+                        return;
+                    }
+                    if (posibleLugarFicha(turno, fila, columna)) {// VEREMOS SI EL LUGAR SE PUEDE PONDER UNA PIEZA
+                        //console.log("casillaOprimida2");
+                        var piezasAfectadas = obtenerPiezasAfectadas(turno, fila, columna);
+                        cambiarPiezas(piezasAfectadas);
+                        tablero[fila][columna] = turno;
+                        if (turno == 1 && sePuedeMover(2)) {
+                            turno++;
+
+                        } else if (turno == 2 && sePuedeMover(1)) {
+                            turno--;
+                        }
+
+                        if (sePuedeMover(1) == false && sePuedeMover(2) == false) {
+                            alert("Fin del juego");
+                            //finJuego = true;
+                            finJuego();//
+
+                        }
+                        turnoJugadorPantalla();
+                        actualizarTablero();
+                        tableroPosiblesMovimientos();
+                        console.log(tablero);
+                        //console.log("*****************************");
+                    } else {
+                        alert("Fin del juego else");
+                    }
+                }
+
+                if (tipoJuego == 2) {
+                    if (turno == 2) {
+                        console.log("__________ Blancas__________");
+                        console.log(fila + ", " + columna);
+                        var posicionesXY = minMax(tablero, turno);
+                        fila = posicionesXY[1];
+                        columna = posicionesXY[0];
+
+                        if (finJuego == false) {//MIENTRAS EL JUEGO NO SE ACABE
+                            console.log("*****************************");
+                            //tableroAnterior=tablero;
+                            //console.log(tableroAnterior);
+                            var elemento = tablero[fila][columna];
+                            //console.log(elemento+" "+fila+" "+columna);
+                            if (elemento != 0) {//MIENTRAS LA CASILLA OPRIMIDA NO ESTE OCUPADA
+                                //console.log("casillaOprimida1");
+                                return;
+                            }
+                            if (posibleLugarFicha(turno, fila, columna)) {// VEREMOS SI EL LUGAR SE PUEDE PONDER UNA PIEZA
+                                //console.log("casillaOprimida2");
+                                var piezasAfectadas = obtenerPiezasAfectadas(turno, fila, columna);
+                                cambiarPiezas(piezasAfectadas);
+                                tablero[fila][columna] = turno;
+                                if (turno == 1 && sePuedeMover(2)) {
+                                    turno++;
+
+                                } else if (turno == 2 && sePuedeMover(1)) {
+                                    turno--;
+                                }
+
+                                if (sePuedeMover(1) == false && sePuedeMover(2) == false) {
+                                    alert("Fin del juego");
+                                    //finJuego = true;
+                                    finJuego();//
+
+                                }
+                                turnoJugadorPantalla();
+                                actualizarTablero();
+                                tableroPosiblesMovimientos();
+                                console.log(tablero);
+                                console.log("*****************************");
+                            } else {
+                                //alert("Fin del juego else Blancas");
+                            }
+                        }
+                        //myVar = setTimeout(casillaOprimida(posicionesXY[1], posicionesXY[0]), 3000);
+
+                    }
+                } /*else if (tipoJuego == 3) {
+                    console.log("Tipo juego: 3");
+                    
+                    //myVar = setTimeout(casillaOprimida(posicionesXY[1], posicionesXY[0]), 3000);
+                    if (finJuego == false) {//MIENTRAS EL JUEGO NO SE ACABE
+                        //console.log("*****************************");
+                        //tableroAnterior=tablero;
+                        //console.log(tableroAnterior);
+                        var elemento = tablero[fila][columna];
+                        //console.log(elemento+" F: "+fila+", C: "+columna);
+                        if (elemento != 0) {//MIENTRAS LA CASILLA OPRIMIDA NO ESTE OCUPADA
+                            //console.log("casillaOprimida1");
+                            return;
+                        }
+                        if (posibleLugarFicha(turno, fila, columna)) {// VEREMOS SI EL LUGAR SE PUEDE PONDER UNA PIEZA
+                            //console.log("casillaOprimida2");
+                            var piezasAfectadas = obtenerPiezasAfectadas(turno, fila, columna);
+                            cambiarPiezas(piezasAfectadas);
+                            tablero[fila][columna] = turno;
+                            if (turno == 1 && sePuedeMover(2)) {
+                                turno++;
+
+                            } else if (turno == 2 && sePuedeMover(1)) {
+                                turno--;
+                            }
+
+                            if (sePuedeMover(1) == false && sePuedeMover(2) == false) {
+                                alert("Fin del juego");
+                                //finJuego = true;
+                                finJuego();//
+
+                            }
+                            turnoJugadorPantalla();
+                            actualizarTablero();
+                            tableroPosiblesMovimientos();
+                            console.log(tablero);
+                            //console.log("*****************************");
+                        } else {
+                            alert("Fin del juego else MvsM");
+                        }
+                    }
+                    
+                }*/
+            } else {
+                alert("Seleccione una opcion de juego");
+            }
+
+        }
+        function sePuedeMover(pieza) {//SE PUEDE USAR UNA IGUAL PARA MARCAR LOS LUGARES POSIBLES PARA MOVIMIENTOS
+            //RECIBE EL TURNO Y VERFIFICA SI TIENE MOVIMIENTOS PARA HACER, DE SER ASI RETURNA TRUE Y SI NO TIENE RETORNA FALSE
+            for (i = 0; i < 8; i++) {
+                for (j = 0; j < 8; j++) {
+                    if (posibleLugarFicha(pieza, j, i)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        function posibleLugarFicha(ficha, fila, columna) {//RECIBE EL TURNO Y LA POSICION DE LA FICHA A PONER PARA VER SI ES POSIBLE PONERLA
+            //VERIFICANDO EN EL VECTOR PIEZAS AFECTADAS ALMACENADAS
+            //console.log("posibleLugarFichas");
+            var piezasAfectadas = obtenerPiezasAfectadas(ficha, fila, columna);
+            //console.log(piezasAfectadas.length);
+            if (piezasAfectadas.length == 0) {
+                //console.log("False");
+                return false;
+            } else {
+                //console.log("True");
+                return true;
+            }
+        }
+        function obtenerPiezasAfectadas(ficha, fila, columna) {//
+            /*
+            ESTE METODO ES EL MAS EXTENSO, ESTE RECIBE EL TURNO Y LA POSICION DE LA FICHA A PONER Y VERIFICA DE FORMA DIAGONAL, VERTICAL Y HORIZONTAL
+            AL VERIFICAR, 
+            
+            DERECHA- VERIFICA SI A LA DERECHA DE LA PIEZA A PONER HAY PIEZAS ENEMIGAS Y AL TERMINAR ESTAS HAY UNA ALIADA PARA TRANSFORMARLAS A PROPIAS, DE SER SI CONCATENA
+            LAS POSICIONES DE LAS PIEZAS ENEMIGAS AFECTADAS, SI ENCUENTRA UN ESPACIO VACIO ENTRE ELLOS O AL FINAL DE LAS ENEMIGAS NO HAY UNA ALIADA NO GUARDA LAS POSICIONES
+            
+            IZQUIERDA- VERIFICA SI A LA IZQUIERDA DE LA PIEZA A PONER HAY PIEZAS ENEMIGAS Y AL TERMINAR ESTAS HAY UNA ALIADA PARA TRANSFORMARLAS A PROPIAS, DE SER SI CONCATENA
+            LAS POSICIONES DE LAS PIEZAS ENEMIGAS AFECTADAS, SI ENCUENTRA UN ESPACIO VACIO ENTRE ELLOS O AL FINAL DE LAS ENEMIGAS NO HAY UNA ALIADA NO GUARDA LAS POSICIONES
+            
+            ARRIBA- VERIFICA SI ARRIBA DE LA PIEZA A PONER HAY PIEZAS ENEMIGAS Y AL TERMINAR ESTAS HAY UNA ALIADA PARA TRANSFORMARLAS A PROPIAS, DE SER SI CONCATENA
+            LAS POSICIONES DE LAS PIEZAS ENEMIGAS AFECTADAS, SI ENCUENTRA UN ESPACIO VACIO ENTRE ELLOS O AL FINAL DE LAS ENEMIGAS NO HAY UNA ALIADA NO GUARDA LAS POSICIONES
+            
+            ABAJO- VERIFICA SI ABAJO DE LA PIEZA A PONER HAY PIEZAS ENEMIGAS Y AL TERMINAR ESTAS HAY UNA ALIADA PARA TRANSFORMARLAS A PROPIAS, DE SER SI CONCATENA
+            LAS POSICIONES DE LAS PIEZAS ENEMIGAS AFECTADAS, SI ENCUENTRA UN ESPACIO VACIO ENTRE ELLOS O AL FINAL DE LAS ENEMIGAS NO HAY UNA ALIADA NO GUARDA LAS POSICIONES
+            
+             SUPERIOR DERECHA- VERIFICA SI A LA DERECHA SUPERIOR DE LA PIEZA A PONER HAY PIEZAS ENEMIGAS Y AL TERMINAR ESTAS HAY UNA ALIADA PARA TRANSFORMARLAS A PROPIAS, DE SER SI CONCATENA
+        LAS POSICIONES DE LAS PIEZAS ENEMIGAS AFECTADAS, SI ENCUENTRA UN ESPACIO VACIO ENTRE ELLOS O AL FINAL DE LAS ENEMIGAS NO HAY UNA ALIADA NO GUARDA LAS POSICIONES
+
+         SUPERIOR IZQUIERDA- VERIFICA SI A LA IZQUIERDA SUPERIOR DE LA PIEZA A PONER HAY PIEZAS ENEMIGAS Y AL TERMINAR ESTAS HAY UNA ALIADA PARA TRANSFORMARLAS A PROPIAS, DE SER SI CONCATENA
+        LAS POSICIONES DE LAS PIEZAS ENEMIGAS AFECTADAS, SI ENCUENTRA UN ESPACIO VACIO ENTRE ELLOS O AL FINAL DE LAS ENEMIGAS NO HAY UNA ALIADA NO GUARDA LAS POSICIONES
+
+         INFERIOR DERECHA- VERIFICA SI A LA  INFERIOR DERECHA DE LA PIEZA A PONER HAY PIEZAS ENEMIGAS Y AL TERMINAR ESTAS HAY UNA ALIADA PARA TRANSFORMARLAS A PROPIAS, DE SER SI CONCATENA
+        LAS POSICIONES DE LAS PIEZAS ENEMIGAS AFECTADAS, SI ENCUENTRA UN ESPACIO VACIO ENTRE ELLOS O AL FINAL DE LAS ENEMIGAS NO HAY UNA ALIADA NO GUARDA LAS POSICIONES
+
+         INFERIOR IZQUIERDA- VERIFICA SI A LA INFERIOR IZQUIERDA DE LA PIEZA A PONER HAY PIEZAS ENEMIGAS Y AL TERMINAR ESTAS HAY UNA ALIADA PARA TRANSFORMARLAS A PROPIAS, DE SER SI CONCATENA
+        LAS POSICIONES DE LAS PIEZAS ENEMIGAS AFECTADAS, SI ENCUENTRA UN ESPACIO VACIO ENTRE ELLOS O AL FINAL DE LAS ENEMIGAS NO HAY UNA ALIADA NO GUARDA LAS POSICIONES
+            
+
+        EN LA VARIABLE puedenSerAfectadas, tiene concatenado todas las posiciones de fichas enemigas que seran cambiadas en el movimiento actual
+            */
+            //console.log("obtenerPiezasAfectadas");
+            var piezasAfectadas = [];
+
+            //Verifica las casillas hacia la derecha********************
+            var puedenSerAfectadas = [];
+            var aux = columna;
+            while (aux < 8) {
+                //console.log("Aux: "+aux);
+                aux++;
+                var elemento = tablero[fila][aux];
+                //console.log("Aux: "+aux+" E: "+elemento);
+                if (elemento == 0 || elemento == ficha) {
+                    if (elemento == ficha) {
+                        piezasAfectadas = piezasAfectadas.concat(puedenSerAfectadas);
+                    }
+                    break;
+                } else {
+                    var posicionPieza = { fila: fila, columna: aux };
+                    puedenSerAfectadas.push(posicionPieza);
+                }
+            }
+            //Verifica las casillas hacia la izquierda*******************
+            var puedenSerAfectadas = [];
+            var aux = columna;
+            while (aux > 0) {
+                //console.log("Aux: "+aux);
+                aux--;
+                var elemento = tablero[fila][aux];
+                //console.log("Aux: "+aux+" E: "+elemento);
+                if (elemento == 0 || elemento == ficha) {
+                    if (elemento == ficha) {
+                        piezasAfectadas = piezasAfectadas.concat(puedenSerAfectadas);
+                    }
+                    break;
+                } else {
+                    var posicionPieza = { fila: fila, columna: aux };
+                    puedenSerAfectadas.push(posicionPieza);
+                }
+            }
+            //Verifica las casillas hacia arriba*******************
+            var puedenSerAfectadas = [];
+            var aux = fila;
+            while (aux > 0) {
+                //console.log("Aux: "+aux);
+                aux--;
+                var elemento = tablero[aux][columna];
+                //console.log("Aux: "+aux+" E: "+elemento);
+                if (elemento == 0 || elemento == ficha) {
+                    if (elemento == ficha) {
+                        piezasAfectadas = piezasAfectadas.concat(puedenSerAfectadas);
+                    }
+                    break;
+                } else {
+                    var posicionPieza = { fila: aux, columna: columna };
+                    puedenSerAfectadas.push(posicionPieza);
+                }
+            }
+            //Verifica las casillas hacia abajo*******************
+            var puedenSerAfectadas = [];
+            var aux = fila;
+            //console.log("_________");
+            while (aux < 7) {
+                //console.log("Aux: "+aux);
+                aux++;
+                var elemento = tablero[aux][columna];
+                //console.log("Aux: "+aux+" E: "+elemento);
+                if (elemento == 0 || elemento == ficha) {
+                    if (elemento == ficha) {
+                        piezasAfectadas = piezasAfectadas.concat(puedenSerAfectadas);
+                    }
+                    break;
+                } else {
+                    var posicionPieza = { fila: aux, columna: columna };
+                    puedenSerAfectadas.push(posicionPieza);
+                }
+            }
+            //Verifica las casillas hacia diagonal inferior derecha(\) *******************
+            var puedenSerAfectadas = [];
+            var auxFl = fila;
+            var auxCl = columna;
+            while (auxFl < 7 && auxCl < 7) {
+                //console.log("Aux: "+aux);
+                auxFl++;
+                auxCl++;
+                var elemento = tablero[auxFl][auxCl];
+                //console.log("Aux: "+aux+" E: "+elemento);
+                if (elemento == 0 || elemento == ficha) {
+                    if (elemento == ficha) {
+                        piezasAfectadas = piezasAfectadas.concat(puedenSerAfectadas);
+                    }
+                    break;
+                } else {
+                    var posicionPieza = { fila: auxFl, columna: auxCl };
+                    puedenSerAfectadas.push(posicionPieza);
+                }
+            }
+            //Verifica las casillas hacia diagonal inferior izquierda (/) *******************
+            var puedenSerAfectadas = [];
+            var auxFl = fila;
+            var auxCl = columna;
+            while (auxFl < 7 && auxCl > 0) {
+                //console.log("Aux: "+aux);
+                auxFl++;
+                auxCl--;
+                var elemento = tablero[auxFl][auxCl];
+                //console.log("Aux: "+aux+" E: "+elemento);
+                if (elemento == 0 || elemento == ficha) {
+                    if (elemento == ficha) {
+                        piezasAfectadas = piezasAfectadas.concat(puedenSerAfectadas);
+                    }
+                    break;
+                } else {
+                    var posicionPieza = { fila: auxFl, columna: auxCl };
+                    puedenSerAfectadas.push(posicionPieza);
+                }
+            }
+            //Verifica las casillas hacia diagonal superior izquierda (\) *******************
+            var puedenSerAfectadas = [];
+            var auxFl = fila;
+            var auxCl = columna;
+            while (auxFl > 0 && auxCl > 0) {
+                //console.log("Aux: "+aux);
+                auxFl--;
+                auxCl--;
+                var elemento = tablero[auxFl][auxCl];
+                //console.log("Aux: "+aux+" E: "+elemento);
+                if (elemento == 0 || elemento == ficha) {
+                    if (elemento == ficha) {
+                        piezasAfectadas = piezasAfectadas.concat(puedenSerAfectadas);
+                    }
+                    break;
+                } else {
+                    var posicionPieza = { fila: auxFl, columna: auxCl };
+                    puedenSerAfectadas.push(posicionPieza);
+                }
+            }
+            //Verifica las casillas hacia diagonal superior derecha (/) *******************
+            var puedenSerAfectadas = [];
+            var auxFl = fila;
+            var auxCl = columna;
+            while (auxFl > 0 && auxCl < 7) {
+                //console.log("Aux: "+aux);
+                auxFl--;
+                auxCl++;
+                var elemento = tablero[auxFl][auxCl];
+                //console.log("Aux: "+aux+" E: "+elemento);
+                if (elemento == 0 || elemento == ficha) {
+                    if (elemento == ficha) {
+                        piezasAfectadas = piezasAfectadas.concat(puedenSerAfectadas);
+                    }
+                    break;
+                } else {
+                    var posicionPieza = { fila: auxFl, columna: auxCl };
+                    puedenSerAfectadas.push(posicionPieza);
+                }
+            }
+            //console.log(piezasAfectadas);
+            return piezasAfectadas;
+        }
+
+        function cambiarPiezas(piezasAfectadas) {//
+            /*
+                RECIBE LA VARIABLE CON TODAS LAS POSICIONES DE LAS PIEZAS Y LAS CAMBIA EN LA MATRIZ QUE REPRESENTA EL TABLERO
+            */
+            for (i = 0; i < piezasAfectadas.length; i++) {
+                var lugar = piezasAfectadas[i];
+                if (tablero[lugar.fila][lugar.columna] == 1) {
+                    console.log("Cambio 1(N)->2(B) " + lugar.fila + " " + lugar.columna);
+                    tablero[lugar.fila][lugar.columna] = 2;
+                } else {
+                    console.log("Cambio 2(B)->1(N) " + lugar.fila + " " + lugar.columna);
+                    tablero[lugar.fila][lugar.columna] = 1;
+                }
+            }
+        }
+        function imprimirTablero() {
+            console.log(tablero);
+        }
+        function turnoJugadorPantalla(resultado) {
+            /*
+                ACTUALIZA EL RECUADRO DE TURNO EN CADA TURNO
+            */
+            //console.log("turno jugador pantalla");
+            turnoPantalla = document.getElementById("turno");
+            if (turno == 1) {
+                turnoPantalla.style.backgroundColor = "black";
+                turnoPantalla.innerHTML = "Turno:<BR>NEGRAS<BR><BR>Resultado:<BR>";
+            } else if (turno == 2) {
+                turnoPantalla.style.backgroundColor = "white";
+                turnoPantalla.innerHTML = "Turno:<BR>BLANCAS<BR><BR>Resultado:<BR>";
+            }
+        }
+        function actualizarTablero() {
+            /*
+                ACTUALIZA EL TABLERO DE LA PANTALLA DEACUERDO A LA MATRIZ QUE TENEMOS INICIADA EN EL INICIO DE LA ETIQUETA SCRIPT
+            */
+            piezasTablero.innerHTML = "";
+            for (columna = 0; columna < 8; columna++) {
+                for (fila = 0; fila < 8; fila++) {
+                    var elemento = tablero[fila][columna];
+                    if (elemento == 0) {
+
+                    } else {
+                        var pieza = document.createElement("div");
+                        pieza.style.position = "absolute";
+                        pieza.style.width = tamCuadros;
+                        pieza.style.height = tamCuadros;
+                        if (elemento == 1) {
+                            //pieza.style.backgroundColor= "black";
+                            pieza.style.backgroundImage = "radial-gradient(#333333 30%, black 70%)";
+                        } else {
+                            //pieza.style.backgroundColor= "white";
+                            pieza.style.backgroundImage = "radial-gradient(white 30%, #cccccc 70%)";
+                        }
+                        pieza.style.borderRadius = "100%";
+                        pieza.style.left = (tamCuadros + separacion) * columna + separacion;
+                        pieza.style.top = (tamCuadros + separacion) * fila + separacion;
+
+                        piezasTablero.appendChild(pieza);
+                    }
+
+                }
+            }
+            actualizarMarcador();
+            //console.log(tablero);
+            //console.log("Tablero actualizado");
+        }
+        function actualizarMarcador() {
+            /*
+                ACTUALIZA EL MARCADOR DE LA PANTALLA EN CADA TURNO
+            */
+            var blancas = 0;
+            var negras = 0;
+            var tableroPuntos = document.getElementById("puntuacion");
+            for (i = 0; i < 8; i++) {
+                for (j = 0; j < 8; j++) {
+                    if (tablero[i][j] == 1) {
+                        negras++;
+                    } else if (tablero[i][j] == 2) {
+                        blancas++;
+                    }
+                }
+            }
+            tableroPuntos.innerHTML = "Negras: " + negras + " Blancas: " + blancas;
+        }
+        function estaLleno() {
+            //Bucle que recorre el primer array
+            for (var i = 0; i < 8; i++) {
+                //Bucle que recorre el array que está en la posición i
+                for (var j = 0; j < 8; j++) {
+                    if (tablero[i][j] == 0) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+        function minMax(tableroP, jugador) {
+            var mejoFila = 0, mejorColumna = 0;
+            var max, maxActual;
+            max = -2147483648;
+            console.log("---------Rango de Jugadas Posibles-------")
+            for (var i = 0; i < 8; i++) {
+                for (var j = 0; j < 8; j++) {
+                    if (tableroP[i][j] == 0 && posibleLugarFicha(jugador, i, j)) {
+                        var tempFila, tempc;
+                        console.log("Posicion" + i + "-" + j)
+                        tableroP[i][j] = jugador
+                        tempc = i;
+                        tempFila = j;
+                        maxActual = valorMin(tableroP, 0, -2147483648, 2147483648, jugador);
+                        // console.log(maxActual)
+                        tableroP[tempc][tempFila] = 0;
+                        if (max < maxActual) {
+
+                            max = maxActual;
+                            mejoFila = tempFila;
+                            mejorColumna = tempc;
+                        }
+                    }
+                }
+            }
+            console.log(mejorColumna + "/" + mejoFila)
+            console.log("Esta Posicion es la mas adecuada! para Jugador : " + jugador + "| " + (mejorColumna + 1) + " - " + (mejoFila + 1))
+            //tablero[mejorColumna][mejoFila]=jugador;
+            var posicion = [mejoFila, mejorColumna];
+            return posicion;
+        }
+
+        function valorMin(tableroP, depht, alfa, beta, jugador) {
+            var jugadorOpuesto = 0;
+            if (jugador == 1) {
+                jugadorOpuesto = 2;
+            } else {
+                jugadorOpuesto = 1;
+            }
+            if (estaLleno(tableroP) || estaLleno(tableroP)) {
+                return Heuristica(tableroP);
+            } else if (estaLleno(tableroP)) {
+                return Heuristica(tableroP);
+            } else if (Dificultad < depht) {
+                return Heuristica(tableroP);
+            } else {
+                for (var i = 0; i < 8; i++) {
+                    for (var j = 0; j < 8; j++) {
+                        if (tableroP[i][j] == 0 && posibleLugarFicha(jugadorOpuesto, i, j)) {
+                            var tempFila, tempc;
+                            tableroP[i][j] = jugadorOpuesto;
+                            tempc = i;
+                            tempFila = j;
+                            beta = Math.min(beta, valorMax(tableroP, ++depht, alfa, beta, jugador));
+                            tableroP[tempc][tempFila] = 0;
+                            if (alfa >= beta) {
+                                return alfa;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return beta;
+        }
+
+
+        function valorMax(tableroP, depht, alfa, beta, jugador) {
+            if (estaLleno(tableroP) || estaLleno(tablero)) {
+                return Heuristica(tableroP);
+            } else if (estaLleno(tableroP)) {
+                return Heuristica(tableroP);
+            } else {
+                for (var i = 0; i < 8; i++) {
+                    for (var j = 0; j < 8; j++) {
+                        if (tableroP[i][j] == 0 && posibleLugarFicha(jugador, i, j)) {
+                            var tempFila, tempc;
+                            tableroP[i][j] = jugador;
+                            tempc = i;
+                            tempFila = j;
+                            alfa = Math.max(alfa, valorMin(tableroP, ++depht, alfa, beta, jugador));
+                            tableroP[tempc][tempFila] = 0;
+                            if (alfa >= beta) {
+                                return beta;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return alfa;
+        }
+
+
+        function Heuristica(tableroP) {
+            var costo = 0;
+            costo = Costo(tableroP, 2) - Costo(tableroP, 1);
+            return costo;
+        }
+
+
+        function Costo(tablero, jugador) {
+            var contador = 0;
+            for (var i = 0; i < 8; i++) {
+                for (var j = 0; j < 8; j++) {
+                    if (tablero[i][j] == jugador) {
+                        contador = contador + matrizPesos[i][j]
+                    }
+                }
+            }
+            return contador;
+        }
+
+
+
+        function AlgorimoGenetico(tableroP, jugador) {
+            const Individuos = generarIndividuos(tableroP, jugador);
+            var calidadIndividuo = 0;
+            console.log("------------Lista de Individuos-------------")
+            for (var j = 0; j < Individuos.length; j++) {
+                // console.log(Individuos[j].x+" / "+Individuos[j].y)
+                // console.log("Individuo:"+(Individuos[j].x+1)+"|"+(Individuos[j].y+1)+" = "+convertirIndividuo(Individuos[j].x, Individuos[j].y,tableroP,jugador))
+                calidadIndividuo = convertirIndividuo(Individuos[j].x, Individuos[j].y, tableroP, jugador)
+
+
+            }
+
+
+
+
+        }
+
+        function generarIndividuos(tableroP, jugador) {
+            const Individuos = []
+            for (var i = 0; i < 8; i++) {
+                for (var j = 0; j < 8; j++) {
+                    if (tableroP[i][j] == 0 && posibleLugarFicha(jugador, i, j)) {
+                        var individuo = new Individuo(i, j);
+                        Individuos.push(individuo)
+                    }
+                }
+            }
+
+            return Individuos;
+        }
+
+        function convertirIndividuo(x, y, tableroP, jugador) {
+            tableroP[x][y] = jugador
+            var calidadIndividuo = Costo(tableroP, jugador);
+            tableroP[x][y] = 0
+            return calidadIndividuo;
+        }
+
+        class Individuo {
+            constructor(posx, posy) {
+                this.posx = posx;
+                this.posy = posy;
+            }
+            get x() {
+                return this.posx;
+            }
+
+            get y() {
+                return this.posy;
+            }
+
+        }
+
+    </script>
+</head>
+
+<!--<div id="puntuacion"
+    style="position:absolute; background-color: green; color: black; font-size: 30 ; text-align: center; width: 662px; border: solid;">
+</div>-->
+
+<!--<div id="turno" style="position: absolute; font-size: 30 ; text-align: center; width: 667px; height: 200px;;margin-left: 675;color: green; border: solid">
+    </div>-->
+
+<div id="puntuacion"></div>
+
+<div id="turno"></div>
+
+<div id="jugadores">Jugadores:<BR><BR>
+    <!--<input type="radio" id="jugadorJugador">Jugador vs Jugador:<BR><BR>
+    <input type="radio" id="jugadorMaquina">Jugador vs Maquina:<BR><BR>
+    <input type="radio" id="jugadorJugador">Maquina vs Maquina:<BR><BR>-->
+    <div>
+        <select id="opcionesPartida">
+
+            <option value="1">Jugador vs Jugador</option>
+            <option value="2">Jugador vs Maquina</option>
+            <option value="3">Maquina vs Maquina</option>
+
+        </select>
+        <input type="button" value="Seleccionar" onclick="iniciarPartida()">
+    </div>
+    <br>
+    <div>
+
+        Maquina 1:
+        <select id="maquinaUno">
+
+            <option value="1">Algoritmos geneticos</option>
+            <option value="2">Algoritmo minimax</option>
+
+        </select>
+        Maquina 2:
+        <select id="maquinaDos">
+
+            <option value="1">Algoritmos geneticos</option>
+            <option value="2">Algoritmo minimax</option>
+
+        </select>
+    </div>
+
+
+</div>
+
+
+
+<div id="fondo"></div>
+
+<div id="piezasTablero"></div>
+
+<div id="sePuedeMover"></div>
+<footer>
+
+</footer>
+
+</html>
