@@ -78,6 +78,8 @@
                 -IMPLEMENTAR LAS FUNCIONES PARA QUE LAS MAQUINAS PUEDAN JUGAR
             
         */
+        var maquina;
+        var movimiento = 0;
         var tipoJuego = 0;// Tipo de juego JvsJ=1, JvsM=2, MvsM=3
         var Dificultad = 4;
         var fondo; // OBTENEMOS EL OBJETO TABLERO QUE SE MUESTRA EN LA PANTALLA
@@ -110,6 +112,16 @@
             [10, 10, 0, 0, 0, 0, 10, 10],
             [10, 10, 5, 5, 5, 5, 10, 10]
         ];
+        var matrizPesosAG = [
+            [500, -150, 30, 10, 10, 30, -150, 500],
+            [-150, -250, 0, 0, 0, 0, -250, -150],
+            [30, 0, 1, 2, 2, 1, 0, 30],
+            [10, 0, 2, 16, 16, 2, 0, 10],
+            [10, 0, 2, 16, 16, 2, 0, 10],
+            [30, 0, 1, 2, 2, 1, 0, 30],
+            [-150, -250, 0, 0, 0, 0, -250, -150],
+            [500, -150, 30, 10, 10, 30, -150, 500]
+        ];
 
         window.onload = function () {// FUNCION QUE SE EJECUTA AL CARGARSE LA PAGINA
             fondo = document.getElementById("fondo");
@@ -131,6 +143,18 @@
             actualizarTablero();
         }
         */
+        function tableroLlenoPiezas() {
+            for (i = 0; i < 8; i++) {
+                for (j = 0; j < 8; j++) {
+                    var elemen = tablero[i][j];
+                    if (elemen == 0) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
         function iniciarPartida() {//
             var combo = document.getElementById("opcionesPartida");
             //console.log("Valor: " + combo.value);
@@ -157,6 +181,7 @@
             }
 
         }
+
         function iniciarJugada() {
             var combo = document.getElementById("maquinaUno");
             //console.log("Maquina 1: " + combo.value);
@@ -165,6 +190,7 @@
             //console.log("Maquina 2: " + combo2.value);
             var selected2 = combo2.options[combo2.selectedIndex].text;
             //console.log("Tipo juego: " + tipoJuego);
+            maquina = combo;
             switch (tipoJuego) {
                 case 1:
                     //alert("1");
@@ -178,8 +204,119 @@
                         contador++;
                         //casillaOprimida();*/
                     //console.log("____Contador: " + contador + "____");
-                    var posicionesXY = minMax(tablero, turno);
-                    casillaOprimida(posicionesXY[1], posicionesXY[0]);
+                    if (sePuedeMover(turno)) {
+                        if (!tableroLlenoPiezas()) {
+                            var par = turno % 2;
+                            if (par != 0) {
+                                if (combo.value == 1) {
+                                    console.log("_Negras_MM");
+                                    var posicionesXY = minMax(tablero, turno);
+                                    casillaOprimida(posicionesXY[1], posicionesXY[0]);
+                                } else if (combo2.value == 2) {
+                                    console.log("_Negras_AG");
+                                    var posicionesXY = algoritmoGenetico(turno, tablero);
+                                    casillaOprimida(posicionesXY[0], posicionesXY[1]);
+
+                                }
+                            } else {
+                                if (combo.value == 1) {
+                                    console.log("_Blancas_MM");
+                                    var posicionesXY = minMax(tablero, turno);
+                                    casillaOprimida(posicionesXY[1], posicionesXY[0]);
+                                } else if (combo2.value == 2) {
+                                    console.log("_Blancas_AG");
+                                    var posicionesXY = algoritmoGenetico(turno, tablero);
+                                    casillaOprimida(posicionesXY[0], posicionesXY[1]);
+                                }
+                            }
+                        } else {
+                            turnoPantalla = document.getElementById("turno");
+                            var puntosNegro = 0;
+                            var puntosBlanco = 0;
+                            for (columnas = 0; columnas < 8; columnas++) {
+                                for (filas = 0; filas < 8; filas++) {
+                                    var elemento = tablero[columnas][filas];
+                                    if (elemento == 1) {
+                                        puntosNegro++;
+                                    } else if (elemento == 2) {
+                                        puntosBlanco++;
+                                    }
+                                }
+                            }
+                            var ganador = "";
+                            if (puntosNegro > puntosBlanco) {
+                                ganador = "Negras Ganan";
+                            } else if (puntosNegro < puntosBlanco) {
+                                ganador = "Blancas Ganan";
+                            } else if (puntosBlanco == puntosNegro) {
+                                ganador = "Empate";
+                            }
+                            turnoPantalla.innerHTML = "Turno:<BR>NEGRAS<BR><BR>Resultado:<BR>" + ganador;
+                        }
+                        function crearTablero() {// CREA EL TABLERO DEACUERDO A LA MATRIZ DE MAS ARRIBA
+                            turnoJugadorPantalla("");
+                            turno.innerHTML = "TURNO<br><br><br>NEGRAS";
+                            for (columna = 0; columna < 8; columna++) {
+                                for (fila = 0; fila < 8; fila++) {
+                                    var cuadro = document.createElement("div");
+                                    cuadro.style.position = "absolute";
+                                    cuadro.style.width = tamCuadros;
+                                    cuadro.style.height = tamCuadros;
+                                    cuadro.style.backgroundColor = "green";
+                                    cuadro.style.left = (tamCuadros + separacion) * columna + separacion;
+                                    cuadro.style.top = (tamCuadros + separacion) * fila + separacion;
+                                    cuadro.setAttribute("onclick", "casillaOprimida(" + fila + "," + columna + ")");
+                                    fondo.appendChild(cuadro);
+
+                                }
+                            }
+                            alert("Fin del juego");
+
+                        }
+                    } else {
+                        turnoPantalla = document.getElementById("turno");
+                        var puntosNegro = 0;
+                        var puntosBlanco = 0;
+                        for (columnas = 0; columnas < 8; columnas++) {
+                            for (filas = 0; filas < 8; filas++) {
+                                var elemento = tablero[columnas][filas];
+                                if (elemento == 1) {
+                                    puntosNegro++;
+                                } else if (elemento == 2) {
+                                    puntosBlanco++;
+                                }
+                            }
+                        }
+                        var ganador = "";
+                        if (puntosNegro > puntosBlanco) {
+                            ganador = "Negras Ganan";
+                        } else if (puntosNegro < puntosBlanco) {
+                            ganador = "Blancas Ganan";
+                        } else if (puntosBlanco == puntosNegro) {
+                            ganador = "Empate";
+                        }
+                        turnoPantalla.innerHTML = "Turno:<BR>NEGRAS<BR><BR>Resultado:<BR>" + ganador;
+                    }
+                    function crearTablero() {// CREA EL TABLERO DEACUERDO A LA MATRIZ DE MAS ARRIBA
+                        turnoJugadorPantalla("");
+                        turno.innerHTML = "TURNO<br><br><br>NEGRAS";
+                        for (columna = 0; columna < 8; columna++) {
+                            for (fila = 0; fila < 8; fila++) {
+                                var cuadro = document.createElement("div");
+                                cuadro.style.position = "absolute";
+                                cuadro.style.width = tamCuadros;
+                                cuadro.style.height = tamCuadros;
+                                cuadro.style.backgroundColor = "green";
+                                cuadro.style.left = (tamCuadros + separacion) * columna + separacion;
+                                cuadro.style.top = (tamCuadros + separacion) * fila + separacion;
+                                cuadro.setAttribute("onclick", "casillaOprimida(" + fila + "," + columna + ")");
+                                fondo.appendChild(cuadro);
+
+                            }
+                        }
+                    }
+
+
                     //}
                     /*var posicionesXY = minMax(tablero, turno);
                     casillaOprimida(posicionesXY[1], posicionesXY[0]);*/
@@ -285,7 +422,9 @@
 
         }
         function casillaOprimida(fila, columna) {//EL EVENTO QUE SE ACTIVA AL DAR CLIC EN UNA CASILLA DEL TABLERO
+
             if (tipoJuego == 1 || tipoJuego == 2 || tipoJuego == 3) {
+                movimiento++;
                 /*if (turno == 1) {
                     console.log("__________Negras__________");
                     console.log(fila + ", " + columna);
@@ -330,53 +469,67 @@
                 }
 
                 if (tipoJuego == 2) {
-                    if (turno == 2) {
-                        console.log("__________ Blancas__________");
-                        console.log(fila + ", " + columna);
+
+                    console.log("__________ Blancas__________");
+                    console.log(fila + ", " + columna);
+
+
+                    console.log("Maquina: "+maquina);
+                    if (maquina == 1) {
+                        console.log("_MM");
                         var posicionesXY = minMax(tablero, turno);
-                        fila = posicionesXY[1];
-                        columna = posicionesXY[0];
-
-                        if (finJuego == false) {//MIENTRAS EL JUEGO NO SE ACABE
-                            console.log("*****************************");
-                            //tableroAnterior=tablero;
-                            //console.log(tableroAnterior);
-                            var elemento = tablero[fila][columna];
-                            //console.log(elemento+" "+fila+" "+columna);
-                            if (elemento != 0) {//MIENTRAS LA CASILLA OPRIMIDA NO ESTE OCUPADA
-                                //console.log("casillaOprimida1");
-                                return;
-                            }
-                            if (posibleLugarFicha(turno, fila, columna)) {// VEREMOS SI EL LUGAR SE PUEDE PONDER UNA PIEZA
-                                //console.log("casillaOprimida2");
-                                var piezasAfectadas = obtenerPiezasAfectadas(turno, fila, columna);
-                                cambiarPiezas(piezasAfectadas);
-                                tablero[fila][columna] = turno;
-                                if (turno == 1 && sePuedeMover(2)) {
-                                    turno++;
-
-                                } else if (turno == 2 && sePuedeMover(1)) {
-                                    turno--;
-                                }
-
-                                if (sePuedeMover(1) == false && sePuedeMover(2) == false) {
-                                    alert("Fin del juego");
-                                    //finJuego = true;
-                                    finJuego();//
-
-                                }
-                                turnoJugadorPantalla();
-                                actualizarTablero();
-                                tableroPosiblesMovimientos();
-                                console.log(tablero);
-                                console.log("*****************************");
-                            } else {
-                                //alert("Fin del juego else Blancas");
-                            }
-                        }
-                        //myVar = setTimeout(casillaOprimida(posicionesXY[1], posicionesXY[0]), 3000);
+                        casillaOprimida(posicionesXY[1], posicionesXY[0]);
+                    } else if (maquina == 2) {
+                        console.log("_AG");
+                        var posicionesXY = algoritmoGenetico(turno, tablero);
+                        casillaOprimida(posicionesXY[0], posicionesXY[1]);
 
                     }
+
+
+
+
+
+                    if (finJuego == false) {//MIENTRAS EL JUEGO NO SE ACABE
+                        console.log("*****************************");
+                        //tableroAnterior=tablero;
+                        //console.log(tableroAnterior);
+                        var elemento = tablero[fila][columna];
+                        //console.log(elemento+" "+fila+" "+columna);
+                        if (elemento != 0) {//MIENTRAS LA CASILLA OPRIMIDA NO ESTE OCUPADA
+                            //console.log("casillaOprimida1");
+                            return;
+                        }
+                        if (posibleLugarFicha(turno, fila, columna)) {// VEREMOS SI EL LUGAR SE PUEDE PONDER UNA PIEZA
+                            //console.log("casillaOprimida2");
+                            var piezasAfectadas = obtenerPiezasAfectadas(turno, fila, columna);
+                            cambiarPiezas(piezasAfectadas);
+                            tablero[fila][columna] = turno;
+                            if (turno == 1 && sePuedeMover(2)) {
+                                turno++;
+
+                            } else if (turno == 2 && sePuedeMover(1)) {
+                                turno--;
+                            }
+
+                            if (sePuedeMover(1) == false && sePuedeMover(2) == false) {
+                                alert("Fin del juego");
+                                //finJuego = true;
+                                finJuego();//
+
+                            }
+                            turnoJugadorPantalla();
+                            actualizarTablero();
+                            tableroPosiblesMovimientos();
+                            console.log(tablero);
+                            console.log("*****************************");
+                        } else {
+                            //alert("Fin del juego else Blancas");
+                        }
+                    }
+                    //myVar = setTimeout(casillaOprimida(posicionesXY[1], posicionesXY[0]), 3000);
+
+
                 } /*else if (tipoJuego == 3) {
                     console.log("Tipo juego: 3");
                     
@@ -667,10 +820,10 @@
             turnoPantalla = document.getElementById("turno");
             if (turno == 1) {
                 turnoPantalla.style.backgroundColor = "black";
-                turnoPantalla.innerHTML = "Turno:<BR>NEGRAS<BR><BR>Resultado:<BR>";
+                turnoPantalla.innerHTML = "Turno:<BR>NEGRAS<BR><BR>";
             } else if (turno == 2) {
                 turnoPantalla.style.backgroundColor = "white";
-                turnoPantalla.innerHTML = "Turno:<BR>BLANCAS<BR><BR>Resultado:<BR>";
+                turnoPantalla.innerHTML = "Turno:<BR>BLANCAS<BR><BR>";
             }
         }
         function actualizarTablero() {
@@ -853,48 +1006,125 @@
 
 
 
-        function AlgorimoGenetico(tableroP, jugador) {
-            const Individuos = generarIndividuos(tableroP, jugador);
-            var calidadIndividuo = 0;
-            console.log("------------Lista de Individuos-------------")
-            for (var j = 0; j < Individuos.length; j++) {
-                // console.log(Individuos[j].x+" / "+Individuos[j].y)
-                // console.log("Individuo:"+(Individuos[j].x+1)+"|"+(Individuos[j].y+1)+" = "+convertirIndividuo(Individuos[j].x, Individuos[j].y,tableroP,jugador))
-                calidadIndividuo = convertirIndividuo(Individuos[j].x, Individuos[j].y, tableroP, jugador)
-
-
-            }
-
-
-
-
-        }
-
-        function generarIndividuos(tableroP, jugador) {
-            const Individuos = []
+        //___________________________________________________________________
+        function costoGenetico(tableroP, jugador) {
+            var contador = 0;
             for (var i = 0; i < 8; i++) {
                 for (var j = 0; j < 8; j++) {
-                    if (tableroP[i][j] == 0 && posibleLugarFicha(jugador, i, j)) {
-                        var individuo = new Individuo(i, j);
-                        Individuos.push(individuo)
+                    if (tableroP[i][j] == jugador) {
+                        contador = contador + matrizPesosAG[i][j]
                     }
                 }
             }
-
-            return Individuos;
+            return contador;
+        }
+        function HeuristicaGenetica(tableroP, jugador) {
+            var jugadorOpuesto = 0;
+            if (jugador == 1) {
+                jugadorOpuesto = 2;
+            } else {
+                jugadorOpuesto = 1;
+            }
+            var costo = 0;
+            costo = costoGenetico(tableroP, jugadorOpuesto) - costoGenetico(tableroP, jugador);
+            return costo;
         }
 
-        function convertirIndividuo(x, y, tableroP, jugador) {
-            tableroP[x][y] = jugador
-            var calidadIndividuo = Costo(tableroP, jugador);
-            tableroP[x][y] = 0
-            return calidadIndividuo;
+        function algoritmoGenetico(jugador, tableroP) {
+            var temx, temy;
+            var fitness = objetivo(jugador, tableroP);
+            const Individuos = []
+
+            console.log(fitness + " Este es el fitness en esta iteracion")
+            //Generamos una poblacion aleatoria que va a ser determinada por el numero de opciones 
+            //Los numeros qdefinidos por el peso son los que vamos a cruzar y mutar
+            var fit = 0;
+            for (var i = 0; i < 8; i++) {
+                for (var j = 0; j < 8; j++) {
+                    if (tableroP[i][j] == 0 && posibleLugarFicha(jugador, i, j)) {
+                        temx = i;
+                        temy = j;
+                        tableroP[i][j] = jugador;
+                        fit = objetivo(jugador, tableroP)
+                        // console.log(fit)
+                        var individuo = new Individuo(fit, i, j);
+                        Individuos.push(individuo)
+                        tableroP[i][j] = 0;
+
+
+                    }
+                }
+            }
+            console.log(fitness)
+            var mejorIndividuo = getMejorIndividuo(Individuos, fit)
+            console.log("Mejor individuio= " + mejorIndividuo[0] + " - " + mejorIndividuo[1])
+            return mejorIndividuo;
         }
 
-        class Individuo {
-            constructor(posx, posy) {
+        function getMejorIndividuo(Individuos, fitness) {
+            for (var i = 0; i < Individuos.length; i++) {
+                if (Individuos[i].valor == fitness) {
+                    let mejor = [Individuos[i].posx, Individuos[i].posy]
+
+                    return mejor;
+                }
+            }
+        }
+
+        function objetivo(jugador, tableroP) {
+            var jugadorOpuesto = 0;
+            if (jugador == 1) {
+                jugadorOpuesto = 2;
+            } else {
+                jugadorOpuesto = 1;
+            }
+            var evaluacionEstatica = HeuristicaGenetica(tableroP, jugador)
+            var puntosLib = getPuntosLib(jugador, tableroP) - getPuntosLib(jugadorOpuesto, tableroP)
+            var bonus = 250
+            var puntajeFinal = (puntosLib * bonus) - evaluacionEstatica
+            return puntajeFinal
+
+        }
+
+        function getPuntosLib(jugador, tableroP) {
+            var contador = 0;
+            for (var i = 0; i < 8; i++) {
+                //Bucle que recorre el array que está en la posición i
+                for (var j = 0; j < 8; j++) {
+                    if (posibleLugarFicha(jugador, i, j)) {
+                        contador = contador + 1;
+                    }
+                }
+            }
+            return contador
+        }
+
+        function getBonus(jugador, tableroP) {
+            var bonus = 0;
+            for (var i = 0; i < 8; i++) {
+                //Bucle que recorre el array que está en la posición i
+                for (var j = 0; j < 8; j++) {
+                    if (tableroP[i][j] == jugador) {
+                        if (matrizPesosAG[i][j] > 150) {
+                            bonus = bonus + matrizPesosAG[i][j]
+                        }
+                    }
+                }
+            }
+            return bonus
+        }
+
+
+
+        let Individuo = class {
+            constructor(valor, posx, posy) {
                 this.posx = posx;
                 this.posy = posy;
+                this.valor = valor;
+            }
+
+            get fit() {
+                return this.fit;
             }
             get x() {
                 return this.posx;
@@ -940,15 +1170,15 @@
         Maquina 1:
         <select id="maquinaUno">
 
-            <option value="1">Algoritmos geneticos</option>
-            <option value="2">Algoritmo minimax</option>
+            <option value="1">Algoritmo minmax</option>
+            <option value="2">Algoritmo geneticos</option>
 
         </select>
         Maquina 2:
         <select id="maquinaDos">
 
-            <option value="1">Algoritmos geneticos</option>
-            <option value="2">Algoritmo minimax</option>
+            <option value="1">Algoritmo minmax</option>
+            <option value="2">Algoritmo geneticos</option>
 
         </select>
     </div>
