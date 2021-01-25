@@ -78,6 +78,8 @@
                 -IMPLEMENTAR LAS FUNCIONES PARA QUE LAS MAQUINAS PUEDAN JUGAR
             
         */
+        var turnoInicialPieza;
+        var turnoSecundarioPieza;
         var maquina;
         var movimiento = 0;
         var tipoJuego = 0;// Tipo de juego JvsJ=1, JvsM=2, MvsM=3
@@ -131,7 +133,7 @@
             fondo.style.height = tamCuadros * 8 + (separacion * 9)
             crearTablero();
             actualizarTablero();
-            tableroPosiblesMovimientos();
+            //tableroPosiblesMovimientos();
         }
         /*
         function iniciar() {
@@ -161,7 +163,23 @@
             var selected = combo.options[combo.selectedIndex].text;
             //alert(selected);
             tipoJuego = combo.value;
+            var piezaIni = document.getElementById("opcionesPiezasIniciales").value;
+            //turnoInicialPieza=piezaIni.combo.options[combo.selectedIndex].text;
+            if (movimiento == 0) {
+                if (piezaIni == 1) {
+                    turnoInicialPieza = piezaIni;
+                    turnoSecundarioPieza = 2;
+                    alert("Inician negras");
+                } else {
+                    turnoInicialPieza = piezaIni;
+                    turnoSecundarioPieza = 1;
+                    alert("Inician blancas");
+                }
+                turno = piezaIni;
 
+            }
+            tableroPosiblesMovimientos();
+            //alert("Inicia: "+piezaIni+", Siguiente: "+turnoSecundarioPieza);
             switch (selected) {
                 case "Jugador vs Jugador":
                     //alert("JvsJ");
@@ -173,9 +191,15 @@
                     tipoJuego = 2;
                     iniciarJugada();
                     break;
-                case "Maquina vs Maquina":
+                case "Maquina vs Jugador":
                     //alert("MvsM");
                     tipoJuego = 3;
+                    iniciarJugada();
+                    break;
+
+                case "Maquina vs Maquina":
+                    //alert("MvsM");
+                    tipoJuego = 4;
                     iniciarJugada();
                     break;
             }
@@ -190,7 +214,7 @@
             //console.log("Maquina 2: " + combo2.value);
             var selected2 = combo2.options[combo2.selectedIndex].text;
             //console.log("Tipo juego: " + tipoJuego);
-            maquina = combo;
+            maquina = combo.value;
             switch (tipoJuego) {
                 case 1:
                     //alert("1");
@@ -199,131 +223,145 @@
                     //alert("2");
                     break;
                 case 3:
+                    //alert("3");
+                    /*if (movimiento == 0) {
+                        movimientoMaquina(combo, combo2);
+                    }
+                    movimientoMaquina(combo, combo2);
+                    break;
+                case 4:
                     /*var contador = 0;
                     while (contador < 2) {
                         contador++;
                         //casillaOprimida();*/
                     //console.log("____Contador: " + contador + "____");
-                    if (sePuedeMover(turno)) {
-                        if (!tableroLlenoPiezas()) {
-                            var par = turno % 2;
-                            if (par != 0) {
-                                if (combo.value == 1) {
-                                    console.log("_Negras_MM");
-                                    var posicionesXY = minMax(tablero, turno);
-                                    casillaOprimida(posicionesXY[1], posicionesXY[0]);
-                                } else if (combo2.value == 2) {
-                                    console.log("_Negras_AG");
-                                    var posicionesXY = algoritmoGenetico(turno, tablero);
-                                    casillaOprimida(posicionesXY[0], posicionesXY[1]);
+                    movimientoMaquina(combo, combo2);
 
-                                }
-                            } else {
-                                if (combo.value == 1) {
-                                    console.log("_Blancas_MM");
-                                    var posicionesXY = minMax(tablero, turno);
-                                    casillaOprimida(posicionesXY[1], posicionesXY[0]);
-                                } else if (combo2.value == 2) {
-                                    console.log("_Blancas_AG");
-                                    var posicionesXY = algoritmoGenetico(turno, tablero);
-                                    casillaOprimida(posicionesXY[0], posicionesXY[1]);
-                                }
-                            }
-                        } else {
-                            turnoPantalla = document.getElementById("turno");
-                            var puntosNegro = 0;
-                            var puntosBlanco = 0;
-                            for (columnas = 0; columnas < 8; columnas++) {
-                                for (filas = 0; filas < 8; filas++) {
-                                    var elemento = tablero[columnas][filas];
-                                    if (elemento == 1) {
-                                        puntosNegro++;
-                                    } else if (elemento == 2) {
-                                        puntosBlanco++;
-                                    }
-                                }
-                            }
-                            var ganador = "";
-                            if (puntosNegro > puntosBlanco) {
-                                ganador = "Negras Ganan";
-                            } else if (puntosNegro < puntosBlanco) {
-                                ganador = "Blancas Ganan";
-                            } else if (puntosBlanco == puntosNegro) {
-                                ganador = "Empate";
-                            }
-                            turnoPantalla.innerHTML = "Turno:<BR>NEGRAS<BR><BR>Resultado:<BR>" + ganador;
-                        }
-                        function crearTablero() {// CREA EL TABLERO DEACUERDO A LA MATRIZ DE MAS ARRIBA
-                            turnoJugadorPantalla("");
-                            turno.innerHTML = "TURNO<br><br><br>NEGRAS";
-                            for (columna = 0; columna < 8; columna++) {
-                                for (fila = 0; fila < 8; fila++) {
-                                    var cuadro = document.createElement("div");
-                                    cuadro.style.position = "absolute";
-                                    cuadro.style.width = tamCuadros;
-                                    cuadro.style.height = tamCuadros;
-                                    cuadro.style.backgroundColor = "green";
-                                    cuadro.style.left = (tamCuadros + separacion) * columna + separacion;
-                                    cuadro.style.top = (tamCuadros + separacion) * fila + separacion;
-                                    cuadro.setAttribute("onclick", "casillaOprimida(" + fila + "," + columna + ")");
-                                    fondo.appendChild(cuadro);
-
-                                }
-                            }
-                            alert("Fin del juego");
-
-                        }
-                    } else {
-                        turnoPantalla = document.getElementById("turno");
-                        var puntosNegro = 0;
-                        var puntosBlanco = 0;
-                        for (columnas = 0; columnas < 8; columnas++) {
-                            for (filas = 0; filas < 8; filas++) {
-                                var elemento = tablero[columnas][filas];
-                                if (elemento == 1) {
-                                    puntosNegro++;
-                                } else if (elemento == 2) {
-                                    puntosBlanco++;
-                                }
-                            }
-                        }
-                        var ganador = "";
-                        if (puntosNegro > puntosBlanco) {
-                            ganador = "Negras Ganan";
-                        } else if (puntosNegro < puntosBlanco) {
-                            ganador = "Blancas Ganan";
-                        } else if (puntosBlanco == puntosNegro) {
-                            ganador = "Empate";
-                        }
-                        turnoPantalla.innerHTML = "Turno:<BR>NEGRAS<BR><BR>Resultado:<BR>" + ganador;
-                    }
-                    function crearTablero() {// CREA EL TABLERO DEACUERDO A LA MATRIZ DE MAS ARRIBA
-                        turnoJugadorPantalla("");
-                        turno.innerHTML = "TURNO<br><br><br>NEGRAS";
-                        for (columna = 0; columna < 8; columna++) {
-                            for (fila = 0; fila < 8; fila++) {
-                                var cuadro = document.createElement("div");
-                                cuadro.style.position = "absolute";
-                                cuadro.style.width = tamCuadros;
-                                cuadro.style.height = tamCuadros;
-                                cuadro.style.backgroundColor = "green";
-                                cuadro.style.left = (tamCuadros + separacion) * columna + separacion;
-                                cuadro.style.top = (tamCuadros + separacion) * fila + separacion;
-                                cuadro.setAttribute("onclick", "casillaOprimida(" + fila + "," + columna + ")");
-                                fondo.appendChild(cuadro);
-
-                            }
-                        }
-                    }
 
 
                     //}
                     /*var posicionesXY = minMax(tablero, turno);
                     casillaOprimida(posicionesXY[1], posicionesXY[0]);*/
-                    //alert("3");
+                    //alert("4");
 
                     break;
             }
+        }
+        function movimientoMaquina(combo, combo2) {
+
+            if (sePuedeMover(turno)) {
+                if (!tableroLlenoPiezas()) {
+                    var par = turno % 2;
+                    if (par != 0) {
+                        if (combo.value == 1) {
+                            console.log("_Negras_MM");
+                            var posicionesXY = minMax(tablero, turno);
+                            casillaOprimida(posicionesXY[1], posicionesXY[0]);
+                        } else if (combo2.value == 2) {
+                            console.log("_Negras_AG");
+                            var posicionesXY = algoritmoGenetico(turno, tablero);
+                            casillaOprimida(posicionesXY[0], posicionesXY[1]);
+
+                        }
+                    } else {
+                        if (combo.value == 1) {
+                            console.log("_Blancas_MM");
+                            var posicionesXY = minMax(tablero, turno);
+                            casillaOprimida(posicionesXY[1], posicionesXY[0]);
+                        } else if (combo2.value == 2) {
+                            console.log("_Blancas_AG");
+                            var posicionesXY = algoritmoGenetico(turno, tablero);
+                            casillaOprimida(posicionesXY[0], posicionesXY[1]);
+                        }
+                    }
+                } else {
+                    turnoPantalla = document.getElementById("turno");
+                    var puntosNegro = 0;
+                    var puntosBlanco = 0;
+                    for (columnas = 0; columnas < 8; columnas++) {
+                        for (filas = 0; filas < 8; filas++) {
+                            var elemento = tablero[columnas][filas];
+                            if (elemento == 1) {
+                                puntosNegro++;
+                            } else if (elemento == 2) {
+                                puntosBlanco++;
+                            }
+                        }
+                    }
+                    var ganador = "";
+                    if (puntosNegro > puntosBlanco) {
+                        ganador = "Negras Ganan";
+                    } else if (puntosNegro < puntosBlanco) {
+                        ganador = "Blancas Ganan";
+                    } else if (puntosBlanco == puntosNegro) {
+                        ganador = "Empate";
+                    }
+                    turnoPantalla.innerHTML = "Turno:<BR>NEGRAS<BR><BR>Resultado:<BR>" + ganador;
+                }
+
+            } else {//_________________________________________________________________
+                turnoPantalla = document.getElementById("turno");
+                var puntosNegro = 0;
+                var puntosBlanco = 0;
+                for (columnas = 0; columnas < 8; columnas++) {
+                    for (filas = 0; filas < 8; filas++) {
+                        var elemento = tablero[columnas][filas];
+                        if (elemento == 1) {
+                            puntosNegro++;
+                        } else if (elemento == 2) {
+                            puntosBlanco++;
+                        }
+                    }
+                }
+                var ganador = "";
+                if (puntosNegro > puntosBlanco) {
+                    ganador = "Negras Ganan";
+                } else if (puntosNegro < puntosBlanco) {
+                    ganador = "Blancas Ganan";
+                } else if (puntosBlanco == puntosNegro) {
+                    ganador = "Empate";
+                }
+                turnoPantalla.innerHTML = "Turno:<BR>NEGRAS<BR><BR>Resultado:<BR>" + ganador;
+            }
+
+        }
+        function crearTablero() {// CREA EL TABLERO DEACUERDO A LA MATRIZ DE MAS ARRIBA
+            turnoJugadorPantalla("");
+            turno.innerHTML = "TURNO<br><br><br>NEGRAS";
+            for (columna = 0; columna < 8; columna++) {
+                for (fila = 0; fila < 8; fila++) {
+                    var cuadro = document.createElement("div");
+                    cuadro.style.position = "absolute";
+                    cuadro.style.width = tamCuadros;
+                    cuadro.style.height = tamCuadros;
+                    cuadro.style.backgroundColor = "green";
+                    cuadro.style.left = (tamCuadros + separacion) * columna + separacion;
+                    cuadro.style.top = (tamCuadros + separacion) * fila + separacion;
+                    cuadro.setAttribute("onclick", "casillaOprimida(" + fila + "," + columna + ")");
+                    fondo.appendChild(cuadro);
+
+                }
+            }
+        }
+        function crearTablero() {// CREA EL TABLERO DEACUERDO A LA MATRIZ DE MAS ARRIBA
+            turnoJugadorPantalla("");
+            turno.innerHTML = "TURNO<br><br><br>NEGRAS";
+            for (columna = 0; columna < 8; columna++) {
+                for (fila = 0; fila < 8; fila++) {
+                    var cuadro = document.createElement("div");
+                    cuadro.style.position = "absolute";
+                    cuadro.style.width = tamCuadros;
+                    cuadro.style.height = tamCuadros;
+                    cuadro.style.backgroundColor = "green";
+                    cuadro.style.left = (tamCuadros + separacion) * columna + separacion;
+                    cuadro.style.top = (tamCuadros + separacion) * fila + separacion;
+                    cuadro.setAttribute("onclick", "casillaOprimida(" + fila + "," + columna + ")");
+                    fondo.appendChild(cuadro);
+
+                }
+            }
+            alert("Fin del juego");
+
         }
         function opcion() {//
             var op = document.getElementById("opciones").selectedIndex;
@@ -331,7 +369,7 @@
             //console.log(op.selectedIndex);
             //alert(op);
         }
-        function finJuego() {//VERIFICA SI EL TABLERO ESTA LLENO PARA MARCAR EL FIN DEL JUEGO Y CONTABILIZAR PUNTOS
+        function finDelJuego() {//VERIFICA SI EL TABLERO ESTA LLENO PARA MARCAR EL FIN DEL JUEGO Y CONTABILIZAR PUNTOS
             turnoPantalla = document.getElementById("turno");
             var puntosNegro = 0;
             var puntosBlanco = 0;
@@ -423,7 +461,7 @@
         }
         function casillaOprimida(fila, columna) {//EL EVENTO QUE SE ACTIVA AL DAR CLIC EN UNA CASILLA DEL TABLERO
 
-            if (tipoJuego == 1 || tipoJuego == 2 || tipoJuego == 3) {
+            if (tipoJuego == 1 || tipoJuego == 2 || tipoJuego == 3 || tipoJuego == 4) {
                 movimiento++;
                 /*if (turno == 1) {
                     console.log("__________Negras__________");
@@ -455,7 +493,7 @@
                         if (sePuedeMover(1) == false && sePuedeMover(2) == false) {
                             alert("Fin del juego");
                             //finJuego = true;
-                            finJuego();//
+                            finDelJuego();//
 
                         }
                         turnoJugadorPantalla();
@@ -467,14 +505,13 @@
                         alert("Fin del juego else");
                     }
                 }
+                if ((tipoJuego == 2 && turno==turnoSecundarioPieza) || (tipoJuego == 3 && turno==turnoInicialPieza) ) {
 
-                if (tipoJuego == 2) {
-
-                    console.log("__________ Blancas__________");
+                    //console.log("__________ Blancas__________");
                     console.log(fila + ", " + columna);
 
 
-                    console.log("Maquina: "+maquina);
+                    console.log("Maquina: " + maquina);
                     if (maquina == 1) {
                         console.log("_MM");
                         var posicionesXY = minMax(tablero, turno);
@@ -485,11 +522,6 @@
                         casillaOprimida(posicionesXY[0], posicionesXY[1]);
 
                     }
-
-
-
-
-
                     if (finJuego == false) {//MIENTRAS EL JUEGO NO SE ACABE
                         console.log("*****************************");
                         //tableroAnterior=tablero;
@@ -515,7 +547,7 @@
                             if (sePuedeMover(1) == false && sePuedeMover(2) == false) {
                                 alert("Fin del juego");
                                 //finJuego = true;
-                                finJuego();//
+                                finDelJuego();//
 
                             }
                             turnoJugadorPantalla();
@@ -1035,7 +1067,7 @@
             var fitness = objetivo(jugador, tableroP);
             const Individuos = []
 
-            console.log(fitness + " Este es el fitness en esta iteracion")
+            ///console.log(fitness + " Este es el fitness en esta iteracion")
             //Generamos una poblacion aleatoria que va a ser determinada por el numero de opciones 
             //Los numeros qdefinidos por el peso son los que vamos a cruzar y mutar
             var fit = 0;
@@ -1055,9 +1087,9 @@
                     }
                 }
             }
-            console.log(fitness)
+            //console.log(fitness)
             var mejorIndividuo = getMejorIndividuo(Individuos, fit)
-            console.log("Mejor individuio= " + mejorIndividuo[0] + " - " + mejorIndividuo[1])
+            //console.log("Mejor individuio= " + mejorIndividuo[0] + " - " + mejorIndividuo[1])
             return mejorIndividuo;
         }
 
@@ -1159,11 +1191,24 @@
 
             <option value="1">Jugador vs Jugador</option>
             <option value="2">Jugador vs Maquina</option>
-            <option value="3">Maquina vs Maquina</option>
+            <option value="3">Maquina vs Jugador</option>
+            <option value="4">Maquina vs Maquina</option>
 
         </select>
         <input type="button" value="Seleccionar" onclick="iniciarPartida()">
     </div>
+
+    <div>
+        <br>
+        <select id="opcionesPiezasIniciales">
+
+            <option value="1">Negras</option>
+            <option value="2">Blancas</option>
+
+
+        </select>
+    </div>
+
     <br>
     <div>
 
